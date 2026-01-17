@@ -1,9 +1,10 @@
 #include "render.h"
 #include "config.h"
+#include "diagnostics.h"
 #include <print>
 
 void renderCharacter(EditorState& st, char character, u32 xPos, u32 yPos, u32 color) {
-	assert(character >= 32 && character <= 126);
+	DIAG_ASSERT(character >= 32 && character <= 126, "renderCharacter non-printable character");
 	Glyph g = *st.Font.getGlyph(character);
 
 	for (u32 y = 0; y < (u32)g.h; y++) {
@@ -23,7 +24,7 @@ void renderCharacter(EditorState& st, char character, u32 xPos, u32 yPos, u32 co
 
 void renderNumber(EditorState& st, std::string_view number, u32 xPos, u32 yPos, u32 color) {
 	for (char c : number) {
-		assert(c >= '0' && c <= '9');
+		DIAG_ASSERT(c >= '0' && c <= '9', "renderNumber received non-digit");
 		Glyph g = *st.Font.getGlyph(c);
 
 		for (u32 y = 0; y < (u32)g.h; y++) {
@@ -45,6 +46,16 @@ void renderNumber(EditorState& st, std::string_view number, u32 xPos, u32 yPos, 
 
 void renderString(EditorState& st, std::string_view str, u32 xPos, u32 yPos, u32 color) {
 	for (char c : str) {
+		if (c == '\t') {
+			Glyph g = *st.Font.getGlyph('>');
+			renderCharacter(st, '>', xPos, yPos, DARK_GREEN);
+			xPos += g.xAdvance;
+			renderCharacter(st, '>', xPos, yPos, DARK_GREEN);
+			xPos += g.xAdvance;
+			xPos += DEFAULT_CHAR_WIDTH * (TAB_SIZE - 2);
+			continue;
+		}
+
 		Glyph g = *st.Font.getGlyph(c);
 
 		for (u32 y = 0; y < (u32)g.h; y++) {
@@ -97,6 +108,15 @@ void renderCurrentMode(EditorState& st) {
 	renderString(st, mode, MODE_LPAD, st.screenBuf.height - MODE_BPAD, RED);
 }
 
+void renderSelectedLine(EditorState& st) {
+	u32 yPos = TPAD + (st.CurrLine - st.TopLine) * LINE_HEIGHT;
+	for (u32 y = 0; y < LINE_HEIGHT; y++) {
+		for (u32 x = 0; x < st.screenBuf.width; x++) {
+			st.screenBuf.pixels[x + (y + yPos) * st.screenBuf.width] = SELECTED_LINE_BG;
+		}
+	}
+}
+
 void renderSelectedPosition(EditorState& st, u32 color) {
 
 	u32 xPos = LPAD + TEXT_LPAD;
@@ -111,35 +131,18 @@ void renderSelectedPosition(EditorState& st, u32 color) {
 		yPos += LINE_HEIGHT;
 	}
 
-	Glyph g = *st.Font.getGlyph(lb->text[0]);
-	for (u32 i = 1; i <= st.CursorPos; i++) {
-		xPos += (u32)g.xAdvance;
+	Glyph g;
+	for (u32 i = 0; i < st.CursorPos; i++) {
 		g = *st.Font.getGlyph(lb->text[i]);
+		if (lb->text[i] == '\t') xPos += st.Font.getGlyph('>')->xAdvance * 2 + (TAB_SIZE - 2) * DEFAULT_CHAR_WIDTH;
+		else xPos += (u32)g.xAdvance;
 	}
 
-	if (st.CurrMode == NormalMode || st.CurrMode == VisualMode) {
-		if (lb->size == 0) {
-			for (u32 y = 1; y < LINE_HEIGHT-1; y++) {
-				for (u32 x = 0; x < 10; x++) {
-					s32 dstX = (s32)xPos + (s32)x;
-					s32 dstY = (s32)yPos + (s32)y;
-					st.screenBuf.pixels[dstX + dstY * (s32)st.screenBuf.width] = color;
-				}
-			}
-			return;
-		}
-
+	for (u32 x = 0; x < DEFAULT_CHAR_WIDTH; x++) {
 		for (u32 y = 1; y < LINE_HEIGHT-1; y++) {
-			for (u32 x = 0; x < 10; x++) {
-				if (st.screenBuf.pixels[xPos + x + (yPos + y) * (s32)st.screenBuf.width] == DARK_GREEN) continue;
-				st.screenBuf.pixels[xPos + x + (yPos + y) * (s32)st.screenBuf.width] = color;
-			}
+			st.screenBuf.pixels[xPos + x + (yPos + y) * (s32)st.screenBuf.width] = color;
 		}
-	}
-	else {
-		for (u32 y = 0; y < LINE_HEIGHT; y++) {
-			st.screenBuf.pixels[xPos + (yPos + y) * (s32)st.screenBuf.width] = color;
-		}
+		if (st.CurrMode == InsertMode) break;
 	}
 }
 
@@ -154,4 +157,8 @@ void renderTextBuffer(EditorState& st) {
 
 void renderFPS(EditorState& st, u32 fps) {
 	renderNumber(st, std::to_string(fps), FPS_LPAD, st.screenBuf.height - FPS_BPAD, RED);
+}
+
+void renderBottom(EditorState& st) {
+
 }

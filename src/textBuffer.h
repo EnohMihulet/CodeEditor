@@ -1,8 +1,8 @@
 #pragma once
 #include <algorithm>
-#include <cassert>
 
 #include "commonTypes.h"
+#include "diagnostics.h"
 
 struct LineBuffer {
 	u32 size = 0;
@@ -16,22 +16,21 @@ struct LineBuffer {
 		text = new char[capacity];
 	}
 
+	char operator[](u32 index) {
+		DIAG_ASSERT(index < size, "LineBuffer[] index out of bounds");
+		return text[index];
+	}
+
 	void append(char c) {
 		if (shouldGrowBuffer()) growBuffer();
-		if (c == '\t') {
-			text[size++] = ' ';
-			text[size++] = '>';
-			text[size++] = '>';
-			text[size++] = ' ';
-		}
-		else text[size++] = c;
+		text[size++] = c;
 		text[size] = '\0';
 	}
 
 	void appendAt(char c, u32 index) {
 		if (shouldGrowBuffer()) growBuffer();
 
-		assert(index <= size);
+		DIAG_ASSERT(index <= size, "appendAt index out of bounds");
 		if (index == size) {
 			append(c);
 			return;
@@ -53,7 +52,7 @@ struct LineBuffer {
 	void removeAt(u32 index) {
 		if (size == 0) return;
 
-		assert(index < size);
+		DIAG_ASSERT(index < size, "removeAt index out of bounds");
 		if (index == size - 1) {
 			remove();
 			return;
@@ -108,7 +107,7 @@ struct TextBuffer {
 	}
 
 	LineBuffer* getLineBuffer(u32 index) {
-		assert(index < size);
+		DIAG_ASSERT(index < size, "getLineBuffer index out of bounds");
 		LineBuffer* curr = front;
 		for (u32 i = 0; i < index; i++) {
 			curr = curr->next;
@@ -124,14 +123,14 @@ struct TextBuffer {
 			back->next = newLine;
 			back = newLine;
 			size++;
-			return 0;
+			return OK;
 		}
 		else if (nextLine == front) {
 			newLine->next = front;
 			front->prev = newLine;
 			front = newLine;
 			size++;
-			return 0;
+			return OK;
 		}
 
 		LineBuffer* prevLine = nextLine->prev;
@@ -141,12 +140,11 @@ struct TextBuffer {
 		prevLine->next = newLine;
 		nextLine->prev = newLine;
 		size++;
-		return 0;
+		return OK;
 	}
 
 	s16 insertAtIndex(u32 index) {
-		assert(index <= size);
-		// if (index > size) index = size;
+		DIAG_ASSERT(index <= size, "insertAtIndex out of bounds");
 
 		if (index == size) {
 			LineBuffer* newLine = new LineBuffer(DEFAULT_SIZE);
@@ -154,7 +152,7 @@ struct TextBuffer {
 			back->next = newLine;
 			back = newLine;
 			size++;
-			return 0;
+			return OK;
 		}
 
 
@@ -168,7 +166,7 @@ struct TextBuffer {
 			front->prev = newLine;
 			front = newLine;
 			size++;
-			return 0;
+			return OK;
 		}
 
 		LineBuffer* prevLine = nextLine->prev;
@@ -178,6 +176,6 @@ struct TextBuffer {
 		prevLine->next = newLine;
 		nextLine->prev = newLine;
 		size++;
-		return 0;
+		return OK;
 	}
 };

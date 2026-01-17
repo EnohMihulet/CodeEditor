@@ -9,29 +9,29 @@ s16 loadTga(TgaImageRGBA& image, const std::string& path) {
 	TgaHeader header{};
 
 	std::ifstream file(path, std::ios::binary);
-	if (!file) return -1;
+	if (!file) return ERR_FILE_NOT_FOUND;
 
 	file.read(reinterpret_cast<char*>(&header), sizeof(header));
-	if (!file) return -1;
+	if (!file) return ERR_EOF;
 
 	static_assert(sizeof(TgaHeader) == 18);
 
 	if (header.colorMapType != 0) {
 		std::println("Unsupported TGA: color-mapped");
-		return -1;
+		return ERR_UNSUPPORTED;
 	}
 	if (header.imageType != 2) {
 		std::println("Unsupported TGA: imageType != 2 (uncompressed truecolor)");
-		return -1;
+		return ERR_UNSUPPORTED;
 	}
 	if (header.pixelDepth != 32) {
 		std::println("Unsupported TGA: pixelDepth != 32");
-		return -1;
+		return ERR_UNSUPPORTED;
 	}
 
 	if (header.idLength) {
 		file.seekg(header.idLength, std::ios::cur);
-		if (!file) return -1;
+		if (!file) return ERR_EOF;
 	}
 
 	image.width = header.width;
@@ -42,7 +42,7 @@ s16 loadTga(TgaImageRGBA& image, const std::string& path) {
 
 	image.pixels = new u32[pixelCount];
 	file.read(reinterpret_cast<char*>(image.pixels), static_cast<std::streamsize>(pixelCount * 4));
-	if (!file) return -1;
+	if (!file) return ERR_EOF;
 
 	u8* pixels = (u8*) image.pixels;
 	for (u32 i = 0; i < pixelCount; ++i) {
@@ -61,7 +61,7 @@ s16 loadTga(TgaImageRGBA& image, const std::string& path) {
 		}
 	}
 
-	return 0;
+	return OK;
 }
 
 
@@ -92,7 +92,7 @@ s16 parseKVTokens(std::unordered_map<std::string, std::string>& kv, const std::s
 		kv.emplace(std::move(k), std::move(v));
 	}
 	
-	return 0;
+	return OK;
 }
 
 s16 toI(const std::unordered_map<std::string, std::string>& kv, const char* key, s16 def) {
@@ -102,20 +102,20 @@ s16 toI(const std::unordered_map<std::string, std::string>& kv, const char* key,
 
 s16 loadFnt(Font& font, const std::string& path) {
 	std::ifstream file(path);
-	if (!file) return -1;
+	if (!file) return ERR_FILE_NOT_FOUND;
 
 	std::string line;
 	std::unordered_map<std::string, std::string> kv;
 	while (std::getline(file, line)) {
 		if (line.rfind("common", 0) == 0) {
-			if (parseKVTokens(kv, line) != 0) return -1;
+			if (parseKVTokens(kv, line) != OK) return ERR_UNKNOWN;
 			font.lineHeight = toI(kv, "lineHeight");
 			font.base = toI(kv, "base");
 			font.scaleH = toI(kv, "scaleH");
 			font.scaleW = toI(kv, "scaleW");
 		}
 		else if (line.rfind("char", 0) == 0) {
-			if (parseKVTokens(kv, line) != 0) return -1;
+			if (parseKVTokens(kv, line) != OK) return ERR_UNKNOWN;
 			Glyph g;
 			g.id = toI(kv, "id");
 			g.x = toI(kv, "x");
@@ -132,7 +132,6 @@ s16 loadFnt(Font& font, const std::string& path) {
 		kv.clear();
 	}
 
-	return 0;
+	return OK;
 }
-
 

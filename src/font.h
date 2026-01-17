@@ -1,5 +1,5 @@
 #include "commonTypes.h"
-#include <cassert>
+#include "diagnostics.h"
 #include <string>
 #include <unordered_map>
 
@@ -23,7 +23,7 @@ struct Font {
 	Glyph glyphs[128];
 
 	const Glyph* getGlyph(char c) {
-		assert(0 <= c && c <= 127);
+		DIAG_ASSERT(0 <= c && c <= 127, "getGlyph character out of range");
 		return &glyphs[(u8)c];
 	}
 };
@@ -58,5 +58,4 @@ s16 parseKVTokens(std::unordered_map<std::string, std::string>& kv, const std::s
 s16 toI(const std::unordered_map<std::string, std::string>& kv, const char* key, s16 def=1);
 
 s16 loadFnt(Font& font, const std::string& path);
-
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdint>
 
 typedef uint8_t  u8;
@@ -12,3 +13,9 @@ typedef int64_t  s64;
 
 typedef float f32;
 typedef double f64;
+
+constexpr s16 OK = 0;
+constexpr s16 ERR_UNKNOWN = -1;
+constexpr s16 ERR_FILE_NOT_FOUND = -2;
+constexpr s16 ERR_UNSUPPORTED = -3;
+constexpr s16 ERR_EOF = -4;

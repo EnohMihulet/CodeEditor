@@ -6,6 +6,7 @@ constexpr u32 BLACK       = 0xFF000000;
 constexpr u32 WHITE       = 0xFFFFFFFF;
 
 constexpr u32 GRAY_10     = 0xFF1A1A1A;
+constexpr u32 SELECTED_LINE_BG = 0xFF0F0F0F;
 constexpr u32 GRAY_20     = 0xFF333333;
 constexpr u32 GRAY_30     = 0xFF4D4D4D;
 constexpr u32 GRAY_40     = 0xFF666666;
@@ -47,4 +48,3 @@ constexpr u32 DARK_BLUE   = 0xFF00008B;
 constexpr u32 LIGHT_RED   = 0xFFFF6666;
 constexpr u32 LIGHT_GREEN = 0xFF66FF66;
 constexpr u32 LIGHT_BLUE  = 0xFF6666FF;
-
