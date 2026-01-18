@@ -7,6 +7,7 @@
 
 #include "eventHandlers.h"
 #include "render.h"
+#include "fileLoader.h"
 
 f64 getDeltaTimeSeconds() {
 	static u64 last = 0;
@@ -52,10 +53,14 @@ s32 main() {
 	st.screenBuf = { WINDOW_WIDTH, WINDOW_HEIGHT, 4 * WINDOW_WIDTH,
 					 (u32*)SDL_malloc((size_t)WINDOW_WIDTH * (size_t)WINDOW_HEIGHT * 4) };
 
+	if (loadFile(st, FILE_PATH) != 0) {
+		std::println("loadFile failed.");
+		return ERR_FILE_NOT_FOUND;
+	};
 	st.MaxDisplayedLineCount = (st.screenBuf.height - TPAD - BPAD) / LINE_HEIGHT;
-	st.DisplayedLineCount = std::min(st.Text.size, st.MaxDisplayedLineCount);
+	st.DisplayedLineCount = std::min(st.Text->size, st.MaxDisplayedLineCount);
 	st.BottomLine = st.DisplayedLineCount - 1;
-	st.CurrLineBuffer = st.Text.getLineBuffer(st.CurrLine);
+	st.CurrLineBuffer = st.Text->getLineBuffer(st.CurrLine);
 
 	s16 fontResult = loadFnt(st.Font, FNT_PATH);
 	if (fontResult != OK) {
@@ -82,9 +87,9 @@ s32 main() {
 				texture = resizeWindow(st, (u32)e.window.data1, (u32)e.window.data2, renderer);
 
 				st.MaxDisplayedLineCount = (st.screenBuf.height - TPAD - BPAD) / LINE_HEIGHT;
-				st.DisplayedLineCount = std::min(st.Text.size, st.MaxDisplayedLineCount);
+				st.DisplayedLineCount = std::min(st.Text->size, st.MaxDisplayedLineCount);
 				st.BottomLine = st.TopLine + st.DisplayedLineCount - 1;
-				if (st.BottomLine >= st.Text.size) st.BottomLine = st.Text.size - 1;
+				if (st.BottomLine >= st.Text->size) st.BottomLine = st.Text->size - 1;
 			}
 
 			if (st.CurrMode == InsertMode) {

@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <string_view>
 
 #include "commonTypes.h"
 #include "diagnostics.h"
@@ -85,6 +86,12 @@ struct TextBuffer {
 	LineBuffer* back;
 	const u32 DEFAULT_SIZE = 128;
 
+	TextBuffer() {
+		size = 0;
+		front = nullptr;
+		back = nullptr;
+	}
+
 	TextBuffer(u32 lines) {
 		size = lines;
 		LineBuffer* curr = new LineBuffer(DEFAULT_SIZE);
@@ -106,6 +113,27 @@ struct TextBuffer {
 		delete back;
 	}
 
+	void append(std::string_view text="", u32 textLen=0) {
+		u32 lineSize = textLen;
+		u32 allocationSize = std::max(DEFAULT_SIZE, lineSize + 1);
+		LineBuffer* newLine = new LineBuffer(allocationSize);
+
+		if (lineSize) {
+			std::copy_n(text.begin(), lineSize, newLine->text);
+		}
+		newLine->size = lineSize;
+		newLine->text[lineSize] = '\0';
+
+		if (!front) {
+			front = back = newLine;
+		} else {
+			newLine->prev = back;
+			back->next = newLine;
+			back = newLine;
+		}
+		size += 1;
+	}
+
 	LineBuffer* getLineBuffer(u32 index) {
 		DIAG_ASSERT(index < size, "getLineBuffer index out of bounds");
 		LineBuffer* curr = front;
@@ -115,8 +143,15 @@ struct TextBuffer {
 		return curr;
 	}
 
-	s16 insertAtLine(LineBuffer* nextLine) {
-		LineBuffer* newLine = new LineBuffer(DEFAULT_SIZE);
+	s16 insertAtLine(LineBuffer* nextLine, std::string_view text="", u32 textLen=0) {
+		LineBuffer* newLine;
+		if (text != "") {
+			newLine = new LineBuffer(textLen);
+			std::copy_n(text.begin(), textLen, newLine->text);
+		}
+		else {
+			newLine = new LineBuffer(DEFAULT_SIZE);
+		}
 
 		if (nextLine == nullptr) {
 			newLine->prev = back;

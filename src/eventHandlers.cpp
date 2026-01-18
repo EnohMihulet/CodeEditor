@@ -16,8 +16,8 @@ SDL_Texture* resizeWindow(EditorState& st, u32 w, u32 h, SDL_Renderer* ren) {
 }
 
 void moveDownOneLine(EditorState& st) {
-	DIAG_ASSERT(st.CurrLine < st.Text.size, "moveDownOneLine current line out of range");
-	if (st.CurrLine == st.Text.size - 1) return;
+	DIAG_ASSERT(st.CurrLine < st.Text->size, "moveDownOneLine current line out of range");
+	if (st.CurrLine == st.Text->size - 1) return;
 
 	st.CurrLine += 1;
 	st.CurrLineBuffer = st.CurrLineBuffer ? st.CurrLineBuffer->next : nullptr;
@@ -26,7 +26,7 @@ void moveDownOneLine(EditorState& st) {
 	if (lb->size == 0) st.CursorPos = 0;
 	else if (st.CursorPos > lb->size-1) st.CursorPos = lb->size-1;
 
-	if (st.DisplayedLineCount < st.MaxDisplayedLineCount || st.BottomLine >= st.Text.size - 1) return;
+	if (st.DisplayedLineCount < st.MaxDisplayedLineCount || st.BottomLine >= st.Text->size - 1) return;
 
 	if ((s32)st.CurrLine + 14 >= (s32)st.BottomLine) {
 		st.TopLine += 1;
@@ -53,11 +53,11 @@ void moveUpOneLine(EditorState& st) {
 }
 
 void jumpToLine(EditorState& st, u32 line) {
-	if (line >= st.Text.size) line = st.Text.size - 1;
+	if (line >= st.Text->size) line = st.Text->size - 1;
 
 	st.CurrLine = line;
 
-	if (line + st.DisplayedLineCount > st.Text.size) {
+	if (line + st.DisplayedLineCount > st.Text->size) {
 		st.BottomLine = line;
 		st.TopLine = (line + 1 > st.DisplayedLineCount) ? line - (st.DisplayedLineCount - 1) : 0;
 	} else {
@@ -65,7 +65,7 @@ void jumpToLine(EditorState& st, u32 line) {
 	st.BottomLine = line + st.DisplayedLineCount - 1;
 	}
 
-	st.CurrLineBuffer = st.Text.getLineBuffer(st.CurrLine);
+	st.CurrLineBuffer = st.Text->getLineBuffer(st.CurrLine);
 
 	auto& lb = st.CurrLineBuffer;
 	if (lb->size == 0) st.CursorPos = 0;
@@ -130,7 +130,7 @@ bool isKeyword(u8 c) {
 
 s32 advance(EditorState& st) {
 	auto& lb = st.CurrLineBuffer;
-	if (st.CurrLine == st.Text.size - 1 && (lb->size == 0 || st.CursorPos == lb->size - 1)) return ERR_EOF;
+	if (st.CurrLine == st.Text->size - 1 && (lb->size == 0 || st.CursorPos == lb->size - 1)) return ERR_EOF;
 	if (st.CursorPos == lb->size - 1) {
 		moveDownOneLine(st);
 		st.CursorPos = 0;
@@ -153,7 +153,7 @@ s32 retreat(EditorState& st) {
 
 void jumpToNextWord(EditorState& st) {
 	auto& lb = st.CurrLineBuffer;
-	if (st.CurrLine == st.Text.size - 1 && (lb->size == 0 || st.CursorPos == lb->size - 1)) return;
+	if (st.CurrLine == st.Text->size - 1 && (lb->size == 0 || st.CursorPos == lb->size - 1)) return;
 
 	// If you are at the end of the line, move down lines until:
 	// 1) you are at an empty line
@@ -254,7 +254,7 @@ void jumpToPrevWord(EditorState& st) {
 
 void jumpToEndOfNextWord(EditorState& st) {
 	auto& lb = st.CurrLineBuffer;
-	if (st.CurrLine == st.Text.size - 1 && (lb->size == 0 || st.CursorPos == lb->size - 1)) return;
+	if (st.CurrLine == st.Text->size - 1 && (lb->size == 0 || st.CursorPos == lb->size - 1)) return;
 
 	// If you are at the end of the line, move down lines until:
 	// 1) you are at an empty line
@@ -467,7 +467,7 @@ void recordKeyEvent(SDL_Event& e) {
 }
 
 void insertLineAtCurrLine(EditorState& st) {
-	st.Text.insertAtLine(st.CurrLineBuffer->next);
+	st.Text->insertAtLine(st.CurrLineBuffer->next);
 	if (st.DisplayedLineCount != st.MaxDisplayedLineCount) {
 		st.DisplayedLineCount += 1;
 		st.BottomLine += 1;
@@ -478,7 +478,7 @@ void insertLineAtCurrLine(EditorState& st) {
 
 void insertLineAboveCurrLine(EditorState& st) {
 	auto& lb = st.CurrLineBuffer;
-	st.Text.insertAtLine(lb);
+	st.Text->insertAtLine(lb);
 	if (st.DisplayedLineCount != st.MaxDisplayedLineCount) {
 		st.DisplayedLineCount += 1;
 		st.BottomLine += 1;
@@ -516,7 +516,7 @@ void handleNormalModeEvent(EditorState& st, SDL_Event& e) {
 		case 'l': moveRight(st); break;
 		case '0': jumpToStartOfLine(st); break;
 		case '^': jumpToFirstNonWhitespace(st); break;
-		case 'G': jumpToLine(st, st.Text.size-1); break;
+		case 'G': jumpToLine(st, st.Text->size-1); break;
 		case 'H': jumpToTopOfWindow(st); break;
 		case 'M': jumpToMiddleOfWindow(st); break;
 		case 'L': jumpToBottomOfWindow(st); break;

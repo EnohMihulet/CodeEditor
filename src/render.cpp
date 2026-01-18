@@ -45,14 +45,10 @@ void renderNumber(EditorState& st, std::string_view number, u32 xPos, u32 yPos, 
 }
 
 void renderString(EditorState& st, std::string_view str, u32 xPos, u32 yPos, u32 color) {
+	Glyph spaceGlyph = *st.Font.getGlyph(' ');
 	for (char c : str) {
 		if (c == '\t') {
-			Glyph g = *st.Font.getGlyph('>');
-			renderCharacter(st, '>', xPos, yPos, DARK_GREEN);
-			xPos += g.xAdvance;
-			renderCharacter(st, '>', xPos, yPos, DARK_GREEN);
-			xPos += g.xAdvance;
-			xPos += DEFAULT_CHAR_WIDTH * (TAB_SIZE - 2);
+			xPos += (u32)spaceGlyph.xAdvance * TAB_SIZE;
 			continue;
 		}
 
@@ -121,7 +117,8 @@ void renderSelectedPosition(EditorState& st, u32 color) {
 
 	u32 xPos = LPAD + TEXT_LPAD;
 	u32 yPos = TPAD;
-	LineBuffer* lb = st.Text.getLineBuffer(st.TopLine);
+	LineBuffer* lb = st.Text->getLineBuffer(st.TopLine);
+	Glyph spaceGlyph = *st.Font.getGlyph(' ');
 
 	for (u32 i = 0; i < st.DisplayedLineCount; i++) {
 		if (lb == st.CurrLineBuffer) break;
@@ -131,11 +128,14 @@ void renderSelectedPosition(EditorState& st, u32 color) {
 		yPos += LINE_HEIGHT;
 	}
 
-	Glyph g;
 	for (u32 i = 0; i < st.CursorPos; i++) {
-		g = *st.Font.getGlyph(lb->text[i]);
-		if (lb->text[i] == '\t') xPos += st.Font.getGlyph('>')->xAdvance * 2 + (TAB_SIZE - 2) * DEFAULT_CHAR_WIDTH;
-		else xPos += (u32)g.xAdvance;
+		char c = lb->text[i];
+		if (c == '\t') {
+			xPos += (u32)spaceGlyph.xAdvance * TAB_SIZE;
+			continue;
+		}
+		Glyph g = *st.Font.getGlyph(c);
+		xPos += (u32)g.xAdvance;
 	}
 
 	for (u32 x = 0; x < DEFAULT_CHAR_WIDTH; x++) {
@@ -147,7 +147,7 @@ void renderSelectedPosition(EditorState& st, u32 color) {
 }
 
 void renderTextBuffer(EditorState& st) {
-	LineBuffer* lb = st.Text.getLineBuffer(st.TopLine);
+	LineBuffer* lb = st.Text->getLineBuffer(st.TopLine);
 
 	for (u32 i = 0; i < st.DisplayedLineCount && lb; i++) {
 		renderString(st, lb->text, LPAD + TEXT_LPAD, TPAD + TEXT_TPAD + i * LINE_HEIGHT, DARK_GREEN);
