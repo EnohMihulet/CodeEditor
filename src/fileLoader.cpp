@@ -1,7 +1,14 @@
 #include <fstream>
+#include <string>
 
 #include "fileLoader.h"
 #include "commonTypes.h"
+
+static std::string extractFileName(const std::string& path) {
+	size_t sep = path.find_last_of("/\\");
+	if (sep == std::string::npos || sep + 1 >= path.size()) return path;
+	return path.substr(sep + 1);
+}
 
 s32 loadFile(EditorState& st, const std::string& path) {
 
@@ -17,7 +24,9 @@ s32 loadFile(EditorState& st, const std::string& path) {
 
 	delete st.Text;
 	st.Text = newText;
-	
+	st.currentFilePath = path;
+	st.currentFileName = extractFileName(path);
+	st.isDirty = false;
 
 	return OK;
 }

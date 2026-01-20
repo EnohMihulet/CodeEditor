@@ -12,14 +12,10 @@ void renderLineNumbers(EditorState& st);
 
 void renderLineSeparators(EditorState& st);
 
-void renderCurrentMode(EditorState& st);
-
 void renderTextBuffer(EditorState& st);
 
 void renderSelectedLine(EditorState& st);
 
 void renderSelectedPosition(EditorState& st, u32 color);
 
-void renderFPS(EditorState& st, u32 fps);
-
-void renderBottom(EditorState& st);
+void renderBottom(EditorState& st, u32 fps);

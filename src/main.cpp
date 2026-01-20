@@ -112,8 +112,7 @@ s32 main() {
 		renderLineNumbers(st);
 		renderSelectedPosition(st, GRAY_70);
 		renderTextBuffer(st);
-		renderCurrentMode(st);
-		renderFPS(st, (u32)fps);
+		renderBottom(st, (u32)fps);
 
 		SDL_UpdateTexture(texture, nullptr, st.screenBuf.pixels, (int)st.screenBuf.pitch);
 		std::memset(st.screenBuf.pixels, 0, (size_t)st.screenBuf.pitch * (size_t)st.screenBuf.height);

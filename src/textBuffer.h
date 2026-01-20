@@ -43,6 +43,29 @@ struct LineBuffer {
 		text[index] = c;
 		size++;
 	}
+
+    void ensureCapacity(u32 required) {
+        while (required > capacity) growBuffer();
+    }
+
+    void splitAt(u32 index, LineBuffer* nextLine) {
+        DIAG_ASSERT(nextLine != nullptr, "splitAt missing destination");
+        if (index > size) index = size;
+
+        u32 len = size - index;
+        nextLine->ensureCapacity(len + 1);
+        if (len > 0) {
+            std::copy_n(text + index, len, nextLine->text);
+        }
+        nextLine->size = len;
+        nextLine->text[len] = '\0';
+
+        size = index;
+        text[size] = '\0';
+        if (len > 0) {
+            std::memset(text + index, 0, len);
+        }
+    }
 	
 	void remove() {
 		if (size == 0) return;

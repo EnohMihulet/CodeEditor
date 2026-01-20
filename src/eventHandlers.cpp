@@ -3,6 +3,7 @@
 #include <print>
 
 static void recordKeyEvent(SDL_Event& e);
+static void markDirty(EditorState& st);
 
 SDL_Texture* resizeWindow(EditorState& st, u32 w, u32 h, SDL_Renderer* ren) {
 	st.screenBuf.width = w;
@@ -466,8 +467,13 @@ void recordKeyEvent(SDL_Event& e) {
 	else diagRecordKey(SDL_GetKeyName(e.key.keysym.sym));
 }
 
+static void markDirty(EditorState& st) {
+	st.isDirty = true;
+}
+
 void insertLineAtCurrLine(EditorState& st) {
 	st.Text->insertAtLine(st.CurrLineBuffer->next);
+	markDirty(st);
 	if (st.DisplayedLineCount != st.MaxDisplayedLineCount) {
 		st.DisplayedLineCount += 1;
 		st.BottomLine += 1;
@@ -479,6 +485,7 @@ void insertLineAtCurrLine(EditorState& st) {
 void insertLineAboveCurrLine(EditorState& st) {
 	auto& lb = st.CurrLineBuffer;
 	st.Text->insertAtLine(lb);
+	markDirty(st);
 	if (st.DisplayedLineCount != st.MaxDisplayedLineCount) {
 		st.DisplayedLineCount += 1;
 		st.BottomLine += 1;
@@ -489,6 +496,19 @@ void insertLineAboveCurrLine(EditorState& st) {
 	}
 	else st.CurrLineBuffer = lb->prev;
 	enterInsertMode(st);
+}
+
+void splitLineAtCursor(EditorState& st) {
+	auto& lb = st.CurrLineBuffer;
+	st.Text->insertAtLine(st.CurrLineBuffer->next);
+	markDirty(st);
+	if (st.DisplayedLineCount != st.MaxDisplayedLineCount) {
+		st.DisplayedLineCount += 1;
+		st.BottomLine += 1;
+	}
+	lb->splitAt(st.CursorPos, lb->next);
+	moveDownOneLine(st);
+	st.CursorPos = 0;
 }
 
 void handleNormalModeEvent(EditorState& st, SDL_Event& e) {
@@ -531,6 +551,7 @@ void handleNormalModeEvent(EditorState& st, SDL_Event& e) {
 		case 'O': { insertLineAboveCurrLine(st); } break;
 		case 'x': { 
 			lb->removeAt(st.CursorPos);
+			markDirty(st);
 			if (st.CursorPos != 0 && st.CursorPos == lb->size) st.CursorPos -= 1;
 		} break;
 		default: break;
@@ -548,11 +569,12 @@ void handleInsertModeKeyDown(EditorState& st, SDL_Event& e) {
 			if (st.CursorPos != 0) {
 				lb->removeAt(st.CursorPos - 1);
 				st.CursorPos -= 1;
+				markDirty(st);
 			}
 		} break;
 		case SDLK_RETURN:
-		case SDLK_RETURN2: insertLineAtCurrLine(st); break;
-		case SDLK_TAB: lb->appendAt('\t', st.CursorPos); st.CursorPos += 1; break;
+		case SDLK_RETURN2: splitLineAtCursor(st); break;
+		case SDLK_TAB: lb->appendAt('\t', st.CursorPos); st.CursorPos += 1; markDirty(st); break;
 
 		default: break;
 	}
@@ -572,6 +594,7 @@ void handleInsertModeTextInput(EditorState& st, SDL_Event& e) {
 		lb->appendAt(e.text.text[i], st.CursorPos);
 		st.CursorPos++;
 	}
+	if (e.text.text[0] != '\0') markDirty(st);
 }
 
 void handleVisualModeEvent(EditorState& st, SDL_Event& e) {

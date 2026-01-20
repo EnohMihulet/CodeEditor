@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 #include "commonTypes.h"
 #include "textBuffer.h"
 #include "font.h"
@@ -8,7 +10,7 @@ constexpr u32 WINDOW_WIDTH = 1920;
 constexpr u32 WINDOW_HEIGHT = 1080;
 
 constexpr u32 TPAD = 0;
-constexpr u32 BPAD = 35;
+constexpr u32 BPAD = 50;
 constexpr u32 LPAD = 25;
 constexpr u32 LINE_NUM_TPAD = 0;
 constexpr u32 LINE_NUM_LPAD = 25;
@@ -56,4 +58,7 @@ struct EditorState {
 	TgaImageRGBA TgaFontImg{};
 
 	OffscreenBuffer screenBuf{};
+	std::string currentFilePath;
+	std::string currentFileName;
+	bool isDirty = false;
 };
